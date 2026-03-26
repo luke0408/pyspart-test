@@ -1,0 +1,6 @@
+[
+  {"user_id": "user_1", "product_id": "prod_1", "quantity": 1, "added_at": "2026-03-01T10:05:00+09:00", "event_type": "add"},
+  {"user_id": "user_2", "product_id": "prod_1", "quantity": 1, "added_at": "2026-03-01T11:05:00+09:00", "event_type": "add"},
+  {"user_id": "user_3", "product_id": "prod_2", "quantity": 1, "added_at": "2026-03-01T12:05:00+09:00", "event_type": "add"},
+  {"user_id": "user_6", "product_id": "prod_1", "quantity": 1, "added_at": "2026-03-02T10:05:00+09:00", "event_type": "add"}
+]

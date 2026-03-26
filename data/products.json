@@ -1,0 +1,4 @@
+[
+  {"product_id": "prod_1", "product_name": "Product 1", "category": "Electronics", "price": 10000.00},
+  {"product_id": "prod_2", "product_name": "Product 2", "category": "Books", "price": 5000.00}
+]
