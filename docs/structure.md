@@ -17,6 +17,7 @@
     - `db/`: SQLAlchemy 모델 정의 및 데이터베이스 연결 설정을 담당합니다.
     - `core/`: 환경 설정 및 공통 유틸리티 코드가 포함됩니다.
 - **scripts/**: 시스템 운영 및 관리를 위한 스크립트 모음입니다. 데이터 시딩(`seed_data.py`), 배치 실행(`run_batch.py`), Grafana 검증 스크립트 등이 포함됩니다.
+- **docs/**: 운영/구조 문서가 위치합니다. 3월 데이터 가정 및 이벤트/리텐션 해석은 `scenario-analysis.md`를 참고합니다.
 - **grafana/**: Grafana의 대시보드 설정 및 데이터 소스 프로비저닝을 위한 설정 파일들이 위치합니다.
 - **data/**: 로컬/개발 검증용 결정론적 JSON 시드 데이터(`products.json`, `product_views.json`, `cart_events.json`, `orders.json`, `payments.json`)를 보관합니다.
 - **tests/**: 시스템의 기능 및 데이터 정합성을 검증하기 위한 Pytest 기반의 테스트 코드가 포함됩니다.
@@ -61,7 +62,7 @@ flowchart TD
   B --> C[docker compose exec api alembic upgrade head]
   C --> D[docker compose exec api python scripts/bootstrap_grafana_readonly_role.py]
   D --> E[python3 scripts/seed_data.py]
-  E --> F[FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-03]
+  E --> F[FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31]
   F --> G[SQL/API/Grafana 검증]
   G --> H[자동 검증: pytest + verify_grafana_dashboard.py]
 ```
@@ -85,7 +86,7 @@ flowchart TD
    - 명령: `python3 scripts/seed_data.py`
 6. Spark 배치 집계 실행
    - 지정한 날짜 범위를 대상으로 KPI 요약 테이블을 재계산합니다.
-   - 명령: `FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-03`
+   - 명령: `FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31`
 
 `scripts/run_batch.py`는 로컬 Java 런타임이 없거나 `FORCE_SPARK_CONTAINER=true`일 때 `docker compose run --rm spark ...` 경로로 실행되므로, 로컬/컨테이너 환경 모두 동일한 배치 진입점을 사용합니다.
 
@@ -102,7 +103,7 @@ flowchart TD
    - FastAPI KPI 엔드포인트가 요약 결과를 정상 반환하는지 확인합니다.
    - 예시:
      - `curl -s "http://localhost:8000/kpi/traffic/daily?summary_date=2026-03-01" | jq .`
-     - `curl -s "http://localhost:8000/kpi/funnel/range?start_date=2026-03-01&end_date=2026-03-03" | jq .`
+      - `curl -s "http://localhost:8000/kpi/funnel/range?start_date=2026-03-01&end_date=2026-03-31" | jq .`
 3. Grafana 검증 (프로비저닝/대시보드)
    - Grafana 헬스 체크와 대시보드 검증 스크립트를 순서대로 실행합니다.
    - 예시:

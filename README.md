@@ -10,6 +10,7 @@
 ## 로컬 런북
 
 상세한 시스템 구조와 데이터 흐름은 [docs/structure.md](docs/structure.md)를 참조하십시오.
+3월 더미 데이터 시나리오(이벤트 피크/리텐션 가정)는 [docs/scenario-analysis.md](docs/scenario-analysis.md)에 정리되어 있습니다.
 실행/검증 단계의 시스템 관점 요약은 `docs/structure.md`의 `## 실행 흐름`, `## 검증 흐름` 섹션에서 확인할 수 있습니다.
 
 다음 명령어를 순서대로 실행하여 환경을 부팅하고, 데이터를 시드하고, 배치 집계를 실행한 후 결과를 검증하십시오.
@@ -45,9 +46,9 @@ python3 scripts/seed_data.py
 ```
 
 ### 5. Spark 배치 집계 실행
-`2026-03-01`부터 `2026-03-03`까지(포함)의 일일 KPI를 계산합니다.
+`2026-03-01`부터 `2026-03-31`까지(포함)의 일일 KPI를 계산합니다.
 ```bash
-FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-03
+FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
 ```
 
 ### 6. SQL 요약 테이블 검증
@@ -64,7 +65,7 @@ FastAPI 읽기 엔드포인트를 통해 KPI 결과를 확인합니다.
 curl -s "http://localhost:8000/kpi/traffic/daily?summary_date=2026-03-01" | jq .
 
 # Ranged Funnel
-curl -s "http://localhost:8000/kpi/funnel/range?start_date=2026-03-01&end_date=2026-03-03" | jq .
+curl -s "http://localhost:8000/kpi/funnel/range?start_date=2026-03-01&end_date=2026-03-31" | jq .
 ```
 
 ### 8. Grafana 프로비저닝 및 대시보드 검증
@@ -77,7 +78,7 @@ python3 scripts/verify_grafana_dashboard.py
 ### 9. 배치 재실행 (멱등성 확인)
 동일한 범위에 대해 배치를 재실행하면 기존 행이 동일한 값으로 교체되어야 합니다.
 ```bash
-FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-03
+FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
 ```
 
 ### 10. 환경 정리

@@ -43,7 +43,7 @@
               }
             ]
           },
-          "unit": "dateTimeAsIso"
+          "decimals": 0
         },
         "overrides": []
       },
@@ -64,7 +64,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
+          "fields": "value",
           "values": false
         },
         "showPercentChange": false,
@@ -81,7 +81,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT MAX(summary_date)::timestamp AS value FROM daily_traffic_summary",
+          "rawSql": "SELECT TO_CHAR(MAX(summary_date), 'YYYY-MM-DD') AS value FROM daily_traffic_summary",
           "refId": "A"
         }
       ],
@@ -108,7 +108,7 @@
               }
             ]
           },
-          "unit": "dateTimeAsIso"
+          "decimals": 0
         },
         "overrides": []
       },
@@ -129,7 +129,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
+          "fields": "value",
           "values": false
         },
         "showPercentChange": false,
@@ -146,7 +146,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT MAX(summary_date)::timestamp AS value FROM daily_conversion_funnel",
+          "rawSql": "SELECT TO_CHAR(MAX(summary_date), 'YYYY-MM-DD') AS value FROM daily_conversion_funnel",
           "refId": "A"
         }
       ],
@@ -173,7 +173,7 @@
               }
             ]
           },
-          "unit": "dateTimeAsIso"
+          "decimals": 0
         },
         "overrides": []
       },
@@ -194,7 +194,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
+          "fields": "value",
           "values": false
         },
         "showPercentChange": false,
@@ -211,7 +211,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT LEAST((SELECT MAX(aggregation_run_at) FROM daily_traffic_summary), (SELECT MAX(aggregation_run_at) FROM daily_conversion_funnel)) AS value",
+          "rawSql": "SELECT TO_CHAR(LEAST((SELECT MAX(aggregation_run_at) FROM daily_traffic_summary), (SELECT MAX(aggregation_run_at) FROM daily_conversion_funnel)), 'YYYY-MM-DD HH24:MI:SS') AS value",
           "refId": "A"
         }
       ],
@@ -258,7 +258,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
+          "fields": "value",
           "values": false
         },
         "showPercentChange": false,
@@ -671,6 +671,6 @@
   "timezone": "Asia/Seoul",
   "title": "Spark KPI Overview",
   "uid": "spark-kpi-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

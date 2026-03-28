@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from app.api.dependencies import get_db_session
 from app.core.settings import get_settings
 from app.main import app
-from scripts.seed_data import calculate_expected_kpis
+from scripts.seed_data import DEMO_END_DATE, DEMO_START_DATE, calculate_expected_kpis
 
 
 # Use host-local database URL for host-based tests
@@ -137,7 +137,13 @@ def test_e2e_full_flow(client):
 
     # 3. Batch Aggregation
     res_batch = _run_script(
-        "run_batch.py", ["--start-date", "2026-03-01", "--end-date", "2026-03-03"]
+        "run_batch.py",
+        [
+            "--start-date",
+            DEMO_START_DATE.isoformat(),
+            "--end-date",
+            DEMO_END_DATE.isoformat(),
+        ],
     )
     assert res_batch.returncode == 0, res_batch.stderr
 
@@ -203,7 +209,13 @@ def test_e2e_full_flow(client):
 
     # 6. Rerun Idempotency
     res_batch_rerun = _run_script(
-        "run_batch.py", ["--start-date", "2026-03-01", "--end-date", "2026-03-03"]
+        "run_batch.py",
+        [
+            "--start-date",
+            DEMO_START_DATE.isoformat(),
+            "--end-date",
+            DEMO_END_DATE.isoformat(),
+        ],
     )
     assert res_batch_rerun.returncode == 0, res_batch_rerun.stderr
 

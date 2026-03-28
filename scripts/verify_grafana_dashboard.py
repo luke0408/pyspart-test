@@ -156,7 +156,7 @@ def verify_dashboard() -> None:
                         """
                     SELECT COUNT(*)
                     FROM daily_traffic_summary
-                    WHERE summary_date BETWEEN '2026-03-01' AND '2026-03-03'
+                    WHERE summary_date BETWEEN '2026-03-01' AND '2026-03-31'
                     """
                     )
                 ).scalar_one()
@@ -168,7 +168,7 @@ def verify_dashboard() -> None:
                         """
                     SELECT COUNT(*)
                     FROM daily_conversion_funnel
-                    WHERE summary_date BETWEEN '2026-03-01' AND '2026-03-03'
+                    WHERE summary_date BETWEEN '2026-03-01' AND '2026-03-31'
                     """
                     )
                 ).scalar_one()
@@ -231,12 +231,12 @@ def verify_dashboard() -> None:
                 grafana_connection.rollback()
                 summary_write_denied = True
 
-        if traffic_rows_in_demo_range < 3:
+        if traffic_rows_in_demo_range < 31:
             raise RuntimeError(
                 "Traffic summary is missing expected seeded rows for demo range"
             )
 
-        if funnel_rows_in_demo_range < 3:
+        if funnel_rows_in_demo_range < 31:
             raise RuntimeError(
                 "Funnel summary is missing expected seeded rows for demo range"
             )

@@ -5,39 +5,78 @@ from datetime import date
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from scripts.seed_data import calculate_expected_kpis
+from scripts.seed_data import (
+    DEMO_END_DATE,
+    DEMO_MONTHLY_ACTIVE_USERS,
+    DEMO_START_DATE,
+    EVENT_PEAK_DATE,
+    calculate_dashboard_summaries,
+    calculate_expected_kpis,
+)
 
 
 def test_kpi_contract_values():
     expected = calculate_expected_kpis()
 
-    assert date(2026, 3, 1) in expected
-    d1 = expected[date(2026, 3, 1)]
-    assert d1["dau"] == 5
-    assert d1["view_users"] == 5
-    assert d1["cart_users"] == 3
-    assert d1["order_users"] == 2
-    assert d1["payment_users"] == 1
-    assert round(d1["cart_from_view_rate"], 4) == 0.6000
-    assert round(d1["order_from_cart_rate"], 4) == 0.6667
-    assert round(d1["payment_from_order_rate"], 4) == 0.5000
-    assert round(d1["payment_from_view_rate"], 4) == 0.2000
+    ordered_dates = sorted(expected)
+    assert ordered_dates[0] == DEMO_START_DATE
+    assert ordered_dates[-1] == DEMO_END_DATE
+    assert len(ordered_dates) == 31
 
-    assert date(2026, 3, 2) in expected
-    d2 = expected[date(2026, 3, 2)]
-    assert d2["dau"] == 1
-    assert d2["view_users"] == 1
-    assert d2["cart_users"] == 1
-    assert d2["order_users"] == 1
-    assert d2["payment_users"] == 1
+    pre_event_dates = [day for day in ordered_dates if day < EVENT_PEAK_DATE]
+    assert all(380 <= expected[day]["dau"] <= 420 for day in pre_event_dates)
 
-    assert date(2026, 3, 3) in expected
-    d3 = expected[date(2026, 3, 3)]
-    assert d3["dau"] == 2
-    assert d3["view_users"] == 1
-    assert d3["cart_users"] == 0
-    assert d3["order_users"] == 0
-    assert d3["payment_users"] == 0
+    event_day = expected[EVENT_PEAK_DATE]
+    assert event_day["dau"] == 800
+
+    max_payment_from_view = max(
+        expected[day]["payment_from_view_rate"] for day in ordered_dates
+    )
+    assert event_day["payment_from_view_rate"] == max_payment_from_view
+
+    post_event_dates = [day for day in ordered_dates if day > EVENT_PEAK_DATE]
+    assert 560 <= expected[post_event_dates[0]]["dau"] <= 610
+    assert 450 <= expected[post_event_dates[-1]]["dau"] <= 500
+    assert expected[post_event_dates[0]]["dau"] > expected[post_event_dates[-1]]["dau"]
+
+    rate_keys = [
+        "cart_from_view_rate",
+        "order_from_cart_rate",
+        "payment_from_order_rate",
+        "payment_from_view_rate",
+    ]
+    for day in ordered_dates:
+        kpi = expected[day]
+        assert (
+            kpi["dau"]
+            >= kpi["view_users"]
+            >= kpi["cart_users"]
+            >= kpi["order_users"]
+            >= kpi["payment_users"]
+        )
+        for rate_key in rate_keys:
+            assert 0.0 <= kpi[rate_key] <= 1.0
+
+    dashboard_summaries = calculate_dashboard_summaries()
+    assert set(dashboard_summaries.keys()) == {
+        "traffic_summary",
+        "funnel_summary",
+        "aggregation_rate",
+        "aggregation_coverage",
+    }
+    assert len(dashboard_summaries["traffic_summary"]) == 31
+    assert len(dashboard_summaries["funnel_summary"]) == 31
+    assert len(dashboard_summaries["aggregation_rate"]) == 31
+
+    coverage = dashboard_summaries["aggregation_coverage"]
+    assert coverage["aggregation_range_start"] == DEMO_START_DATE.isoformat()
+    assert coverage["aggregation_range_end"] == DEMO_END_DATE.isoformat()
+    assert coverage["covered_days"] == 31
+    assert coverage["expected_days"] == 31
+    assert coverage["coverage_rate"] == 1.0
+    assert coverage["monthly_active_users"] == DEMO_MONTHLY_ACTIVE_USERS
+    assert coverage["peak_summary_date"] == EVENT_PEAK_DATE.isoformat()
+    assert coverage["peak_dau_users"] == 800
 
 
 def test_seed_data_print_expected_stability():
