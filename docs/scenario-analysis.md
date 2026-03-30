@@ -36,22 +36,17 @@
 - 이벤트 당일(3/16): DAU 800 피크와 함께 결제 도달율(`payment_from_view_rate`)이 월중 최고치로 상승합니다.
 - 이벤트 후(3/17~3/31): 초반 600명대 리텐션 이후 점진 하락 곡선을 보입니다.
 
-## 대시보드 데이터 구성
+## KPI 기대값 구성
 
-요청된 네 가지 데이터 묶음은 `scripts/seed_data.py`의 `calculate_dashboard_summaries()`에서 제공합니다.
+요청된 KPI 기대값은 `scripts/seed_data.py`의 `calculate_expected_kpis()`에서 계산됩니다.
 
-- `traffic_summary`: 일자별 `dau_users`
-- `funnel_summary`: 일자별 `view_users`, `cart_users`, `order_users`, `payment_users`
-- `aggregation_rate`: 일자별 전환율
+- 일자별 DAU(`dau`)
+- 일자별 퍼널 단계 사용자 수(`view_users`, `cart_users`, `order_users`, `payment_users`)
+- 일자별 전환율
   - `cart_from_view_rate`
   - `order_from_cart_rate`
   - `payment_from_order_rate`
   - `payment_from_view_rate`
-- `aggregation_coverage`:
-  - `aggregation_range_start`, `aggregation_range_end`
-  - `covered_days`, `expected_days`, `coverage_rate`
-  - `monthly_active_users`
-  - `peak_summary_date`, `peak_dau_users`
 
 ## 확인 방법
 
@@ -62,8 +57,8 @@ python3 scripts/seed_data.py
 # 3월 전체 집계 실행
 FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
 
-# 시나리오 요약(traffic/funnel/rate/coverage) 확인
-python3 scripts/seed_data.py --print-dashboard-summaries
+# 시나리오 기반 기대 KPI 확인
+python3 scripts/seed_data.py --print-expected
 ```
 
 ## 관련 파일

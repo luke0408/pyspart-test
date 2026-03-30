@@ -12,17 +12,12 @@ class Settings(BaseSettings):
     SPARK_APP_NAME: str = Field(default=...)
     SPARK_TIMEZONE: str = Field(default=...)
     API_PORT: int = Field(default=...)
-    GRAFANA_PORT: int = Field(default=3000)
-    GF_SECURITY_ADMIN_USER: str = Field(default="admin")
-    GF_SECURITY_ADMIN_PASSWORD: str = Field(default="admin")
-    GRAFANA_POSTGRES_DB: str = Field(default="postgres")
-    GRAFANA_POSTGRES_USER: str = Field(default="grafana_reader")
-    GRAFANA_POSTGRES_PASSWORD: str = Field(default="grafana_reader")
 
     model_config = SettingsConfigDict(
         env_file=(".env",),
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore",
     )
 
     @classmethod

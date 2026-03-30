@@ -320,80 +320,6 @@ def calculate_expected_kpis(
     return expected
 
 
-def calculate_dashboard_summaries() -> dict[str, Any]:
-    payloads = _build_demo_events()
-    expected = calculate_expected_kpis(event_payloads=payloads)
-    ordered_dates = sorted(expected)
-
-    traffic_summary = [
-        {
-            "summary_date": summary_date.isoformat(),
-            "dau_users": expected[summary_date]["dau"],
-        }
-        for summary_date in ordered_dates
-    ]
-
-    funnel_summary = [
-        {
-            "summary_date": summary_date.isoformat(),
-            "view_users": expected[summary_date]["view_users"],
-            "cart_users": expected[summary_date]["cart_users"],
-            "order_users": expected[summary_date]["order_users"],
-            "payment_users": expected[summary_date]["payment_users"],
-        }
-        for summary_date in ordered_dates
-    ]
-
-    aggregation_rate = [
-        {
-            "summary_date": summary_date.isoformat(),
-            "cart_from_view_rate": round(
-                expected[summary_date]["cart_from_view_rate"],
-                6,
-            ),
-            "order_from_cart_rate": round(
-                expected[summary_date]["order_from_cart_rate"],
-                6,
-            ),
-            "payment_from_order_rate": round(
-                expected[summary_date]["payment_from_order_rate"],
-                6,
-            ),
-            "payment_from_view_rate": round(
-                expected[summary_date]["payment_from_view_rate"],
-                6,
-            ),
-        }
-        for summary_date in ordered_dates
-    ]
-
-    monthly_active_users = {
-        event["user_id"]
-        for table_name in ("product_views", "cart_events", "orders", "payments")
-        for event in payloads[table_name]
-    }
-    expected_days = len(enumerate_dates(DEMO_START_DATE, DEMO_END_DATE))
-    covered_days = len(ordered_dates)
-
-    aggregation_coverage = {
-        "aggregation_range_start": DEMO_START_DATE.isoformat(),
-        "aggregation_range_end": DEMO_END_DATE.isoformat(),
-        "covered_days": covered_days,
-        "expected_days": expected_days,
-        "coverage_rate": round(covered_days / expected_days, 4),
-        "monthly_active_users": len(monthly_active_users),
-        "peak_summary_date": EVENT_PEAK_DATE.isoformat(),
-        "peak_dau_users": expected[EVENT_PEAK_DATE]["dau"],
-    }
-
-    return {
-        "traffic_summary": traffic_summary,
-        "funnel_summary": funnel_summary,
-        "aggregation_rate": aggregation_rate,
-        "aggregation_coverage": aggregation_coverage,
-    }
-
-
 def seed_data():
     db: Session = SessionLocal()
     try:
@@ -451,18 +377,9 @@ def seed_data():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--print-expected", action="store_true")
-    parser.add_argument("--print-dashboard-summaries", action="store_true")
     args = parser.parse_args()
 
-    if args.print_dashboard_summaries:
-        print(
-            json.dumps(
-                calculate_dashboard_summaries(),
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
-    elif args.print_expected:
+    if args.print_expected:
         expected = calculate_expected_kpis()
         for d, kpis in expected.items():
             print(f"Date: {d}")

@@ -7,10 +7,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from scripts.seed_data import (
     DEMO_END_DATE,
-    DEMO_MONTHLY_ACTIVE_USERS,
     DEMO_START_DATE,
     EVENT_PEAK_DATE,
-    calculate_dashboard_summaries,
     calculate_expected_kpis,
 )
 
@@ -56,27 +54,6 @@ def test_kpi_contract_values():
         )
         for rate_key in rate_keys:
             assert 0.0 <= kpi[rate_key] <= 1.0
-
-    dashboard_summaries = calculate_dashboard_summaries()
-    assert set(dashboard_summaries.keys()) == {
-        "traffic_summary",
-        "funnel_summary",
-        "aggregation_rate",
-        "aggregation_coverage",
-    }
-    assert len(dashboard_summaries["traffic_summary"]) == 31
-    assert len(dashboard_summaries["funnel_summary"]) == 31
-    assert len(dashboard_summaries["aggregation_rate"]) == 31
-
-    coverage = dashboard_summaries["aggregation_coverage"]
-    assert coverage["aggregation_range_start"] == DEMO_START_DATE.isoformat()
-    assert coverage["aggregation_range_end"] == DEMO_END_DATE.isoformat()
-    assert coverage["covered_days"] == 31
-    assert coverage["expected_days"] == 31
-    assert coverage["coverage_rate"] == 1.0
-    assert coverage["monthly_active_users"] == DEMO_MONTHLY_ACTIVE_USERS
-    assert coverage["peak_summary_date"] == EVENT_PEAK_DATE.isoformat()
-    assert coverage["peak_dau_users"] == 800
 
 
 def test_seed_data_print_expected_stability():

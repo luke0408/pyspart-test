@@ -7,6 +7,67 @@
 - Docker 및 Docker Compose
 - Python 3.11+ (로컬 스크립트 실행용)
 
+## OS별 실행 런북 (macOS / Windows / Linux)
+
+아래는 OS별로 달라지는 실행 포인트만 빠르게 정리한 섹션입니다. 핵심 순서는 동일합니다.
+
+| 항목 | macOS / Linux | Windows (PowerShell) |
+| --- | --- | --- |
+| `.env` 준비 | `cp .env.example .env` | `Copy-Item .env.example .env` |
+| 파이썬 실행기 | `python3` | `py -3` (또는 `python`) |
+| 일회성 환경변수 | `FORCE_SPARK_CONTAINER=true <command>` | `$env:FORCE_SPARK_CONTAINER='true'; <command>` |
+| 환경변수 해제 | `unset FORCE_SPARK_CONTAINER` | `Remove-Item Env:FORCE_SPARK_CONTAINER` |
+
+### macOS 런북 (zsh/bash)
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec api alembic upgrade head
+python3 scripts/seed_data.py
+FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
+docker compose exec postgres psql -U postgres -c "SELECT * FROM daily_traffic_summary ORDER BY summary_date ASC;"
+curl -s "http://localhost:8000/kpi/traffic/daily?summary_date=2026-03-01" | jq .
+FORCE_SPARK_CONTAINER=true python3 -m pytest -q
+docker compose down -v
+```
+
+### Linux 런북 (bash)
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec api alembic upgrade head
+python3 scripts/seed_data.py
+FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
+docker compose exec postgres psql -U postgres -c "SELECT * FROM daily_traffic_summary ORDER BY summary_date ASC;"
+curl -s "http://localhost:8000/kpi/traffic/daily?summary_date=2026-03-01" | jq .
+FORCE_SPARK_CONTAINER=true python3 -m pytest -q
+docker compose down -v
+```
+
+### Windows 런북 (PowerShell)
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build
+docker compose exec api alembic upgrade head
+py -3 scripts/seed_data.py
+
+$env:FORCE_SPARK_CONTAINER='true'
+py -3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
+py -3 -m pytest -q
+Remove-Item Env:FORCE_SPARK_CONTAINER
+
+docker compose exec postgres psql -U postgres -c "SELECT * FROM daily_traffic_summary ORDER BY summary_date ASC;"
+Invoke-RestMethod "http://localhost:8000/kpi/traffic/daily?summary_date=2026-03-01"
+
+docker compose down -v
+```
+
+> Windows에서 `py -3`가 없으면 `python`으로 같은 명령을 실행하면 됩니다.
+> `jq`가 없으면 `curl ... | jq .` 대신 `curl` 또는 `Invoke-RestMethod`만 사용하세요.
+
 ## 로컬 런북
 
 상세한 시스템 구조와 데이터 흐름은 [docs/structure.md](docs/structure.md)를 참조하십시오.
@@ -22,7 +83,7 @@ cp .env.example .env
 ```
 
 ### 1. 환경 부팅
-PostgreSQL, API, Spark, Grafana 서비스를 시작합니다.
+PostgreSQL, API, Spark 서비스를 시작합니다.
 ```bash
 docker compose up -d --build
 ```
@@ -33,32 +94,26 @@ PostgreSQL 데이터베이스에 스키마를 적용합니다.
 docker compose exec api alembic upgrade head
 ```
 
-### 3. Grafana 읽기 전용 데이터베이스 역할 초기화
-KPI 요약 테이블에 대한 읽기 전용 권한을 가진 Grafana 데이터소스 역할을 생성하거나 업데이트합니다.
-```bash
-docker compose exec api python scripts/bootstrap_grafana_readonly_role.py
-```
-
-### 4. 결정론적 원시 데이터 시딩
+### 3. 결정론적 원시 데이터 시딩
 샘플 이커머스 이벤트를 원시 테이블에 삽입합니다.
 ```bash
 python3 scripts/seed_data.py
 ```
 
-### 5. Spark 배치 집계 실행
+### 4. Spark 배치 집계 실행
 `2026-03-01`부터 `2026-03-31`까지(포함)의 일일 KPI를 계산합니다.
 ```bash
 FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
 ```
 
-### 6. SQL 요약 테이블 검증
+### 5. SQL 요약 테이블 검증
 데이터베이스에서 직접 집계 결과를 확인합니다.
 ```bash
 docker compose exec postgres psql -U postgres -c "SELECT * FROM daily_traffic_summary ORDER BY summary_date ASC;"
 docker compose exec postgres psql -U postgres -c "SELECT summary_date, view_users, cart_users, order_users, payment_users FROM daily_conversion_funnel ORDER BY summary_date ASC;"
 ```
 
-### 7. API 엔드포인트 검증
+### 6. API 엔드포인트 검증
 FastAPI 읽기 엔드포인트를 통해 KPI 결과를 확인합니다.
 ```bash
 # Daily Traffic
@@ -68,20 +123,13 @@ curl -s "http://localhost:8000/kpi/traffic/daily?summary_date=2026-03-01" | jq .
 curl -s "http://localhost:8000/kpi/funnel/range?start_date=2026-03-01&end_date=2026-03-31" | jq .
 ```
 
-### 8. Grafana 프로비저닝 및 대시보드 검증
-Grafana 상태를 확인하고 결정론적 프로비저닝/데이터 검사를 실행합니다.
-```bash
-curl -s "http://localhost:3000/api/health" | jq .
-python3 scripts/verify_grafana_dashboard.py
-```
-
-### 9. 배치 재실행 (멱등성 확인)
+### 7. 배치 재실행 (멱등성 확인)
 동일한 범위에 대해 배치를 재실행하면 기존 행이 동일한 값으로 교체되어야 합니다.
 ```bash
 FORCE_SPARK_CONTAINER=true python3 scripts/run_batch.py --start-date 2026-03-01 --end-date 2026-03-31
 ```
 
-### 10. 환경 정리
+### 8. 환경 정리
 모든 서비스를 중지하고 볼륨을 제거합니다.
 ```bash
 docker compose down -v
@@ -92,9 +140,6 @@ docker compose down -v
 자동 검증 스위트를 실행합니다:
 ```bash
 FORCE_SPARK_CONTAINER=true python3 -m pytest -q
-python3 scripts/verify_grafana_dashboard.py
 ```
-
-`scripts/verify_grafana_dashboard.py`는 Docker 서비스가 실행 중이고 위의 런북을 통해 데이터가 시딩되었다고 가정합니다.
 
 `jq`는 선택 사항입니다. 설치되어 있지 않은 경우 curl 예제에서 `| jq .`를 제거하십시오.
